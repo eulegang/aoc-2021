@@ -37,8 +37,8 @@ fn increases(l: &[u32]) -> u32 {
 fn windows(l: &[u32]) -> Vec<(u32, u32, u32)> {
     let mut res = Vec::new();
 
-    for i in 0 .. l.len() - 2 {
-        res.push((l[i], l[i+1], l[i+2]));
+    for i in 0..l.len() - 2 {
+        res.push((l[i], l[i + 1], l[i + 2]));
     }
 
     res
@@ -55,7 +55,6 @@ fn main() {
 
     println!("windowed increases: {}", increases(&blended));
 }
-
 
 #[test]
 fn test_input_model() {
