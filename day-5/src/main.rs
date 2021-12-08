@@ -14,6 +14,14 @@ fn main() {
         }
     }
 
+    println!("hazard snapped square count: {}", grid.count(|d| d>= 2));
+
+    let lines = utils::input_vec::<Line>();
+    let mut grid = Grid::<1000>::default();
+    for line in lines {
+        grid.imprint(&line);
+    }
+
     println!("hazard square count: {}", grid.count(|d| d>= 2));
 }
 
@@ -33,6 +41,81 @@ impl Line {
     fn snapped(&self) -> bool {
         self.start.x == self.end.x || self.start.y == self.end.y
     }
+
+    fn iter(&self) -> LineIter {
+        let Point { x: sx, y: sy } = self.start;
+        let Point { x: ex, y: ey } = self.end;
+
+        let dx = if sx < ex {
+            Mono::Inc
+        } else if sx > ex {
+            Mono::Dec
+        } else {
+            Mono::Stag
+        };
+
+        let dy = if sy < ey {
+            Mono::Inc
+        } else if sy > ey {
+            Mono::Dec
+        } else {
+            Mono::Stag
+        };
+
+
+        let lenx = (sx as i32 - ex as i32).abs() as u32;
+        let leny = (sy as i32 - ey as i32).abs() as u32;
+        let len = lenx.max(leny) + 1;
+
+        LineIter {
+            x: sx, y: sy,
+            dx, dy,
+            len
+        }
+    }
+}
+
+#[derive(Debug)]
+struct LineIter {
+    x: u32,
+    y: u32,
+    dx: Mono,
+    dy: Mono,
+    len: u32,
+}
+
+#[derive(Debug)]
+enum Mono {
+    Stag,
+    Inc,
+    Dec
+}
+
+impl Mono {
+    fn apply(&self, val: u32) -> u32 {
+        match self {
+            Mono::Stag => val,
+            Mono::Inc => val + 1,
+            Mono::Dec => val.saturating_sub(1),
+        }
+    }
+}
+
+impl Iterator for LineIter {
+    type Item = Point;
+    fn next(&mut self) -> Option<Point> {
+        if self.len == 0 {
+            return None;
+        }
+
+        let p = Point { x: self.x, y: self.y };
+
+        self.x = self.dx.apply(self.x);
+        self.y = self.dy.apply(self.y);
+        self.len -= 1;
+
+        Some(p)
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -48,22 +131,8 @@ impl<const W: usize> Default for Grid<W> {
 
 impl<const W: usize> Grid<W> {
     fn imprint(&mut self, line: &Line) {
-        if line.start.x == line.end.x {
-            let lo = line.start.y.min(line.end.y) as usize;
-            let hi = line.start.y.max(line.end.y) as usize;
-            let x = line.start.x as usize;
-
-            for y in lo..=hi {
-                self.quant[x][y] += 1;
-            }
-        } else {
-            let lo = line.start.x.min(line.end.x) as usize;
-            let hi = line.start.x.max(line.end.x) as usize;
-            let y = line.start.y as usize;
-
-            for x in lo..=hi {
-                self.quant[x][y] += 1;
-            }
+        for p in line.iter() {
+            self.quant[p.x as usize][p.y as usize] += 1;
         }
     }
 
@@ -182,4 +251,19 @@ fn test_depth() {
     println!("{}", &grid);
 
     assert_eq!(grid.count(|d| d >= 2), 5);
+}
+
+#[test]
+fn test_depth2() {
+    let lines = utils::test_input_vec::<Line>();
+    let mut grid = Grid::<10>::default();
+    for line in lines {
+        grid.imprint(&line);
+        println!("applying: {:?}", line);
+        println!("{}", &grid);
+    }
+
+    println!("{}", &grid);
+
+    assert_eq!(grid.count(|d| d >= 2), 12);
 }
