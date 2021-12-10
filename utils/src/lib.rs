@@ -36,3 +36,4 @@ pub fn test_input<T: Parsable>() -> T {
 pub fn input<T: Parsable>() -> T {
     parse_file("input")
 }
+
