@@ -83,6 +83,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "day-9"
+version = "0.1.0"
+dependencies = [
+ "nom",
+ "utils",
+]
+
+[[package]]
 name = "diff"
 version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
