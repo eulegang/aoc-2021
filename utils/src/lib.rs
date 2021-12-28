@@ -37,3 +37,51 @@ pub fn input<T: Parsable>() -> T {
     parse_file("input")
 }
 
+pub struct Bound {
+    cur: usize,
+    len: usize,
+}
+
+impl Iterator for Bound {
+    type Item = usize;
+
+    fn next(&mut self) -> Option<usize> {
+        if self.len == 0 {
+            return None;
+        }
+
+        let res = self.cur;
+
+        self.cur += 1;
+        self.len -= 1;
+
+        Some(res)
+    }
+}
+
+pub fn neigh(i: usize, cap: usize) -> Bound {
+    let mut len = 3;
+    let mut cur = 0;
+
+    if let Some(s) = i.checked_sub(1) {
+        cur = s;
+    } else {
+        len -= 1;
+    }
+
+    len = len.min(cap - cur);
+
+    Bound { cur, len }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn xyz() {
+       assert_eq!(vec![0, 1], neigh(0, 10).collect::<Vec<_>>());
+       assert_eq!(vec![4, 5, 6], neigh(5, 10).collect::<Vec<_>>());
+       assert_eq!(vec![8, 9], neigh(9, 10).collect::<Vec<_>>());
+    }
+}
