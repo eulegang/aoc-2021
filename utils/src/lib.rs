@@ -4,7 +4,7 @@ pub trait Parsable: Sized {
     fn parse(input: &str) -> nom::IResult<&str, Self>;
 }
 
-fn parse_file_vec<T: Parsable>(file: &str) -> Vec<T> {
+pub fn parse_file_vec<T: Parsable>(file: &str) -> Vec<T> {
     let content = read_to_string(file).expect(&format!("reading {}", file));
     let mut res = Vec::new();
 
@@ -16,7 +16,7 @@ fn parse_file_vec<T: Parsable>(file: &str) -> Vec<T> {
     res
 }
 
-fn parse_file<T: Parsable>(file: &str) -> T {
+pub fn parse_file<T: Parsable>(file: &str) -> T {
     let content = read_to_string(file).expect(&format!("reading {}", file));
     T::parse(&content).expect("unable to parse").1
 }
