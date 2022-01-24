@@ -11,6 +11,7 @@ fn main() {
     let graph: Graph = utils::input();
 
     println!("path count: {}", graph.paths().count());
+    println!("multi path count: {}", graph.multi_paths().count());
 }
 
 pub struct Path {
@@ -52,6 +53,14 @@ impl Graph {
 
         PathGen { graph, states }
     }
+
+    fn multi_paths(&self) -> MultiSmallPathGen {
+        let graph = self;
+        let mut states = VecDeque::with_capacity(128);
+        states.push_back(vec![0]);
+
+        MultiSmallPathGen { graph, states }
+    }
 }
 
 pub struct PathGen<'a> {
@@ -73,6 +82,57 @@ impl<'a> Iterator for PathGen<'a> {
 
             for next in nexts {
                 if self.graph.is_reenterent(*next) || !state.contains(next)  {
+                    let mut x = state.clone();
+                    x.push(*next);
+                    self.states.push_back(x);
+                }
+            }
+        }
+
+        None
+    }
+}
+
+pub struct MultiSmallPathGen<'a> {
+    graph: &'a Graph,
+    states: VecDeque<Vec<usize>>,
+}
+
+impl<'a> Iterator for MultiSmallPathGen<'a> {
+    type Item = Path;
+
+    fn next(&mut self) -> Option<Path> {
+        fn reenter(graph: &Graph, state: &[usize]) -> bool {
+            let mut counts = vec![0; graph.edge.len()];
+
+            for s in state {
+                counts[*s] += 1;
+            }
+
+            for i in 0..counts.len() {
+                if counts[i] > 1 && !graph.is_reenterent(i) {
+                    return false;
+                }
+            }
+
+            true
+        }
+
+
+        while let Some(state) = self.states.pop_front() {
+            if state[state.len() - 1] == 1 {
+                return Some(Path { comps: state });
+            }
+
+            let cur = state[state.len() - 1];
+            let nexts = &self.graph.verts[cur];
+
+            for next in nexts {
+                if *next == 0 {
+                    continue;
+                }
+
+                if self.graph.is_reenterent(*next) || !state.contains(next) || reenter(self.graph, &state) {
                     let mut x = state.clone();
                     x.push(*next);
                     self.states.push_back(x);
@@ -185,6 +245,19 @@ fn part1() {
 }
 
 #[test]
+fn part2() {
+    let graph: Graph = utils::test_input();
+
+    for x in graph.multi_paths().take(50) {
+        println!("{}", graph.path_repr(&x));
+    }
+
+    //panic!("foobar");
+
+    assert_eq!(graph.multi_paths().count(), 36);
+}
+
+#[test]
 fn part1_mid() {
     let graph: Graph = utils::parse_file("test.input.mid");
 
@@ -192,8 +265,23 @@ fn part1_mid() {
 }
 
 #[test]
+fn part2_mid() {
+    let graph: Graph = utils::parse_file("test.input.mid");
+
+    assert_eq!(graph.multi_paths().map(|p| println!("{}", graph.path_repr(&p))).count(), 103);
+}
+
+
+#[test]
 fn part1_lrg() {
     let graph: Graph = utils::parse_file("test.input.lrg");
 
     assert_eq!(graph.paths().count(), 226);
+}
+
+#[test]
+fn part2_lrg() {
+    let graph: Graph = utils::parse_file("test.input.lrg");
+
+    assert_eq!(graph.multi_paths().count(), 3509);
 }
